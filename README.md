@@ -1,23 +1,14 @@
 # HomeDetection
 
-## Targets
-Nerves applications are configured that they can produce images for target
-hardware by setting `NERVES_TARGET`. By default, if MIX_TARGET is not set, Nerves
-defaults to building a host target. This is useful for executing logic tests,
-running utilities, and debugging. For more information about targets:
-https://hexdocs.pm/nerves/targets.html#content
+This example polls a sound sensor and sends a noise alert to a RGB LCD display 
+and turns on an LED when a loud noise is heard.  The system returns to 
+monitoring after 5 seconds.
 
-## Getting Started    
+On the GrovePi+ or GrovePi Zero, connect a LED to port D3, a sound sensor to 
+port A0, and a RGB LCD display to the IC2-1 port.
 
-To start your Nerves app:
+This project was created as a Nerves app. To start your Nerves app:
   * `export NERVES_TARGET=my_target` or prefix every command with `NERVES_TARGET=my_target`, Example: `NERVES_TARGET=rpi3`
   * Install dependencies with `mix deps.get`
   * Create firmware with `mix firmware`
   * Burn to an SD card with `mix firmware.burn`
-
-## Learn more
-
-  * Official docs: https://hexdocs.pm/nerves/getting-started.html
-  * Official website: http://www.nerves-project.org/
-  * Discussion Slack elixir-lang #nerves ([Invite](https://elixir-slackin.herokuapp.com/))
-  * Source: https://github.com/nerves-project/nerves
