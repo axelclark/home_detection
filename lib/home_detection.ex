@@ -5,26 +5,22 @@ defmodule HomeDetection do
 
   alias GrovePi.{RGBLCD, Sound, Digital}
 
-  defstruct [:sound, :sound_led, :last_alert, :ref]
+  defstruct [:sound, :led, :last_alert, :ref]
 
   def start_link(pins) do
     GenServer.start_link(__MODULE__, pins)
   end
 
-  def init([sound_pin, sound_led_pin]) do
-    state = %HomeDetection{sound: sound_pin, sound_led: sound_led_pin}
+  def init([sound_pin, led_pin]) do
+    state = %HomeDetection{sound: sound_pin, led: led_pin}
     send(self(), :initialize)
 
     {:ok, state}
   end
 
   def handle_info(:initialize, state) do
-    Digital.set_pin_mode(state.sound_led, :output)
-    Digital.write(state.sound_led, 1)
-    :timer.sleep(1_000)
-    Digital.write(state.sound_led, 0)
-
-    reset_monitor(state.sound_led)
+    initialize_led(state.led)
+    reset_monitor(state.led)
 
     Sound.subscribe(state.sound, :loud)
     Sound.subscribe(state.sound, :quiet)
@@ -36,7 +32,7 @@ defmodule HomeDetection do
 
   def handle_info({_pin, :loud, %{value: value}}, %{ref: nil} = state) do
     Logger.info "Received sound alert: value #{inspect value}"
-    sound_alert(state.sound_led)
+    sound_alert(state.led)
     ref = schedule_monitor_reset()
 
     {:noreply, %{state | last_alert: :loud, ref: ref}}
@@ -58,7 +54,7 @@ defmodule HomeDetection do
 
   def handle_info(:reset_monitor, %{last_alert: :quiet} = state) do
     Logger.info "Back to monitoring..."
-    reset_monitor(state.sound_led)
+    reset_monitor(state.led)
 
     {:noreply, %{state | ref: nil}}
   end
@@ -69,20 +65,27 @@ defmodule HomeDetection do
     {:noreply, %{state | ref: ref}}
   end
 
-  def handle_info(message, state) do
-    Logger.info "Received unexpected message: #{inspect message}"
-
+  def handle_info(_message, state) do
     {:noreply, state}
   end
 
-  defp sound_alert(sound_led) do
-    RGBLCD.set_text("Noise Alert!")
-    Digital.write(sound_led, 1)
+  defp initialize_led(led) do
+    Digital.set_pin_mode(led, :output)
+    Digital.write(led, 1)
+    :timer.sleep(1_000)
+    Digital.write(led, 0)
   end
 
-  defp reset_monitor(sound_led) do
+  defp sound_alert(led) do
+    RGBLCD.set_rgb(255, 8, 0)
+    RGBLCD.set_text("Noise Alert!")
+    Digital.write(led, 1)
+  end
+
+  defp reset_monitor(led) do
+    RGBLCD.set_rgb(0, 128, 64)
     RGBLCD.set_text("Monitoring...")
-    Digital.write(sound_led, 0)
+    Digital.write(led, 0)
   end
 
   def schedule_monitor_reset() do
